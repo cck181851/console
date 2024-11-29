@@ -102,7 +102,7 @@ void move_player(char direction) {
          maze[new_x][new_y] == 'C' || 
          maze[new_x][new_y] == 'E' ||
          maze[new_x][new_y] == 'P') 
-        && !maze[new_x][new_y]=='#'){ 
+    ){ 
         // Check if the player reaches the exit
         if (maze[new_x][new_y] == 'E') {
             print_maze();

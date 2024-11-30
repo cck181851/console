@@ -3,202 +3,203 @@
 #include <unistd.h>
 #include <termios.h>
 #include <signal.h>
-#include <time.h>
+#include <string.h>
 
-#define ROWS 22
-#define COLS 50
-#define CANDY_COUNT 10
-#define POISON_COUNT 30
+#define SIZE 9
 
-// Global Variables
-char maze[ROWS][COLS];
-int player_x = 0, player_y = 0; // Initial player position
-int candies_eaten = 0; // Counter for candies eaten
+// Grid and input system
+int grid[SIZE][SIZE];
+
+// Function to restore terminal settings
 struct termios oldt, newt;
-
-// Function to Restore Terminal Settings
 void restore_terminal() {
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 }
 
-// Signal Handler for Graceful Exit
-void handle_exit(int sig) {
-    restore_terminal();
-    printf("\nGame exited gracefully.\n");
-    exit(0);
-}
-
-// Function to Print Maze and Player Info
-void print_maze() {
-    system("clear"); // Clear the console
-    printf("Candies Collected: %d\n", candies_eaten); // Display candies collected
-    for (int i = 0; i < ROWS; i++) {
-        for (int j = 0; j < COLS; j++) {
-            printf("%c", maze[i][j]);
+// Function to generate a random Sudoku puzzle
+void generate_random_sudoku() {
+    int base[SIZE][SIZE] = {
+        {5, 3, 0, 0, 7, 0, 0, 0, 0},
+        {6, 0, 0, 1, 9, 5, 0, 0, 0},
+        {0, 9, 8, 0, 0, 0, 0, 6, 0},
+        {8, 0, 0, 0, 6, 0, 0, 0, 3},
+        {4, 0, 0, 8, 0, 3, 0, 0, 1},
+        {7, 0, 0, 0, 2, 0, 0, 0, 6},
+        {0, 6, 0, 0, 0, 0, 2, 8, 0},
+        {0, 0, 0, 4, 1, 9, 0, 0, 5},
+        {0, 0, 0, 0, 8, 0, 0, 7, 9}
+    };
+    
+    // Randomly shuffle rows and columns in the grid
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            grid[i][j] = base[i][j];
         }
-        printf("\n");
+    }
+
+    // Randomly remove values to create a puzzle
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (rand() % 2) {
+                grid[i][j] = 0;  // Randomly make cells empty
+            }
+        }
     }
 }
 
-// Function to Generate a Random Maze
-void generate_random_maze() {
-    for (int i = 0; i < ROWS; i++) {
-        for (int j = 0; j < COLS; j++) {
-            if (i == 0 || i == ROWS - 1 || j == 0 || j == COLS - 1) {
-                maze[i][j] = '#'; // Border walls
+// Function to print the grid
+void print_grid() {
+    system("clear");
+    printf("\033[1;34mSudoku Game\033[0m\n\n");
+
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (grid[i][j] == 0) {
+                printf(". ");  // Empty cells are represented by "."
             } else {
-                maze[i][j] = (rand() % 4 == 0) ? '#' : '.'; // Random walls or empty spaces
+                printf("%d ", grid[i][j]);
+            }
+
+            if ((j + 1) % 3 == 0 && j != SIZE - 1) {
+                printf("| ");
+            }
+        }
+
+        printf("\n");
+
+        if ((i + 1) % 3 == 0 && i != SIZE - 1) {
+            printf("------|-------|------\n");
+        }
+    }
+    printf("\n");
+}
+
+// Function to check if the current move is valid
+int is_valid_move(int row, int col, int num) {
+    // Check row and column
+    for (int i = 0; i < SIZE; i++) {
+        if (grid[row][i] == num || grid[i][col] == num) {
+            return 0; // Invalid move
+        }
+    }
+
+    // Check the 3x3 subgrid
+    int start_row = (row / 3) * 3;
+    int start_col = (col / 3) * 3;
+
+    for (int i = start_row; i < start_row + 3; i++) {
+        for (int j = start_col; j < start_col + 3; j++) {
+            if (grid[i][j] == num) {
+                return 0; // Invalid move
             }
         }
     }
 
-    // Ensure path from start to exit (first row and last column are .)
-    for (int j = 0; j < COLS; j++) {
-        maze[0][j] = '.'; // First row
-    }
-    for (int i = 0; i < ROWS; i++) {
-        maze[i][COLS - 1] = '.'; // Last column
-    }
-
-    // Ensure player position
-    maze[player_x][player_y] = 'O'; // Player at the top-left
+    return 1; // Valid move
 }
 
-// Function to Place Candies, Poisons, and Exit
-void place_candies_poisons_and_exit() {
-    // Place candies (C)
-    for (int i = 0; i < CANDY_COUNT; i++) {
-        int x = rand() % (ROWS - 2) + 1;
-        int y = rand() % (COLS - 2) + 1;
-        if (maze[x][y] == '.') {
-            maze[x][y] = 'C'; // Place candy
-        }
-    }
-
-    // Place poisons (P)
-    for (int i = 0; i < POISON_COUNT; i++) {
-        int x = rand() % (ROWS - 2) + 1;
-        int y = rand() % (COLS - 2) + 1;
-        if (maze[x][y] == '.') {
-            maze[x][y] = 'P'; // Place poison
-        }
-    }
-
-    // Place exit (E) randomly, ensuring it is not overwritten
-    int exit_x, exit_y;
-    do {
-        exit_x = rand() % (ROWS - 2) + 1;
-        exit_y = rand() % (COLS - 2) + 1;
-    } while (maze[exit_x][exit_y] != '.'); // Ensure the spot is empty
-    maze[exit_x][exit_y] = 'E'; // Place the exit
-}
-
-// Function to Move Player
-void move_player(char direction) {    
-    int new_x = player_x, new_y = player_y;
-
-    if (direction == 'w') new_x--;       // Move up
-    else if (direction == 'a') new_y--; // Move left
-    else if (direction == 's') new_x++; // Move down
-    else if (direction == 'd') new_y++; // Move right
-
-    // Check for valid move
-    if (new_x >= 0 &&
-        new_x < ROWS && 
-        new_y >= 0 && 
-        new_y < COLS &&
-        (maze[new_x][new_y] == '.' || 
-         maze[new_x][new_y] == 'C' || 
-         maze[new_x][new_y] == 'E' ||
-         maze[new_x][new_y] == 'P') 
-    ){ 
-        // Check if the player reaches the exit
-        if (maze[new_x][new_y] == 'E') {
-            print_maze();
-            printf("Congratulations! You escaped the maze!\n");   
-            printf("\nGame Over! Final Score: %d\n", candies_eaten);         
-            restore_terminal();
-            exit(0);
-        }
-
-        // Handle candy collection
-        if (maze[new_x][new_y] == 'C') {
-            candies_eaten++; // Increment candy count
-        }
-
-        // Handle poison encounter
-        if (maze[new_x][new_y] == 'P') {
-            print_maze();
-            maze[new_x][new_y] = 'P';  // Leave the poison
-            maze[player_x][player_y] = '.'; // Clear the old position
-            printf("You stepped on a poison! Game Over.\n");
-            printf("Your score: %d\n", candies_eaten);
-            restore_terminal();
-            exit(0);
-        }
-
-        // Update player position and clear the previous one
-        maze[player_x][player_y] = '.';
-        player_x = new_x;
-        player_y = new_y;
-        maze[player_x][player_y] = 'O'; // Set new position
-    }       
-}
-
-// Function to Get User Input Without Requiring 'Enter' Key
-char get_input() {
-    char ch;
+// Function to take user input on the fly (without waiting for Enter key)
+int get_char() {
     struct termios oldt, newt;
-
-    // Save old terminal settings and apply new ones
+    char ch;
+    
     tcgetattr(STDIN_FILENO, &oldt);
     newt = oldt;
     newt.c_lflag &= ~(ICANON | ECHO);  // Disable canonical mode and echo
     tcsetattr(STDIN_FILENO, TCSANOW, &newt);
 
-    ch = getchar(); // Get user input
+    ch = getchar();
 
-    // Restore old terminal settings
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-
     return ch;
 }
 
-// Main Function
+// Function to take input and update the grid
+void take_input() {
+    int row, col, num;
+    char ch;
+
+    printf("Enter row (1-9), column (1-9), and number (1-9) to fill (e.g. 1 2 3) or 'q' to quit: ");
+
+    // Read input until 3 characters are provided or user presses 'q'
+    row = col = num = 0;
+    int entry_count = 0;
+
+    while (entry_count < 3) {
+        ch = get_char();
+
+        // Check for 'q' to quit the game
+        if (ch == 'q') {
+            printf("\033[1;31mExiting the game...\033[0m\n");
+            restore_terminal();
+            exit(0);
+        }
+
+        // If it's a number, accumulate the values
+        if (ch >= '1' && ch <= '9') {
+            if (entry_count == 0) {
+                row = ch - '0';  // Convert char to int
+            } else if (entry_count == 1) {
+                col = ch - '0';  // Convert char to int
+            } else if (entry_count == 2) {
+                num = ch - '0';  // Convert char to int
+            }
+            entry_count++;
+        }
+    }
+
+    row -= 1; // Convert to zero-based index
+    col -= 1; // Convert to zero-based index
+
+    // Validate the move
+    if (grid[row][col] != 0) {
+        printf("\033[1;31mCell already filled! You lost!\033[0m\n");
+        restore_terminal();
+        exit(1); // End the game if the cell was already filled
+    } else if (!is_valid_move(row, col, num)) {
+        printf("\033[1;31mInvalid move! You lost!\033[0m\n");
+        restore_terminal();
+        exit(1); // End the game if the move is invalid
+    } else {
+        grid[row][col] = num;
+        printf("Move accepted!\n");
+    }
+}
+
+// Function to check if the game is over (i.e., the grid is complete)
+int is_game_over() {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (grid[i][j] == 0) {
+                return 0; // Game not over, still empty cells
+            }
+        }
+    }
+    return 1; // Game over, no empty cells
+}
+
+// Main function
 int main() {
-    // Set up terminal for non-canonical mode
-    tcgetattr(STDIN_FILENO, &oldt); // Save old settings
+    // Set up terminal settings to disable line buffering
+    tcgetattr(STDIN_FILENO, &oldt);
     newt = oldt;
     newt.c_lflag &= ~(ICANON | ECHO); // Disable canonical mode and echo
     tcsetattr(STDIN_FILENO, TCSANOW, &newt);
 
-    // Handle signals for graceful exit
-    signal(SIGINT, handle_exit);
-    signal(SIGTERM, handle_exit);
+    generate_random_sudoku();  // Generate a random Sudoku grid
 
-    // Seed random number generator
-    srand(time(NULL));
-
-    // Generate random maze
-    generate_random_maze();
-
-    // Place candies, poisons, and the exit
-    place_candies_poisons_and_exit();
-
-    // Game loop
+    // Main game loop
     while (1) {
-        print_maze(); // Display the maze with candy count
-        char input = get_input(); // Read user input without requiring 'Enter'
+        print_grid();
 
-        if (input == 'q') { // Exit on 'q'
+        if (is_game_over()) {
+            printf("\033[1;32mCongratulations! You solved the Sudoku!\033[0m\n");
             break;
         }
 
-        move_player(input); // Update player position        
+        take_input();  // Get input from the user
     }
 
-    // Restore terminal settings and exit
     restore_terminal();
-    printf("\nGame exited gracefully.\n");
     return 0;
 }

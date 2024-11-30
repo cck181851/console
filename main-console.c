@@ -135,3 +135,11 @@ int main() {
     return 0;
 }
 
+    // Free dynamically allocated memory for game names
+    for (int i = 0; i < game_count; i++) {
+        free(games[i]);
+    }
+
+    return 0;
+}
+

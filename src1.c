@@ -119,13 +119,13 @@ int move_snake(char direction) {
 
     // Check if the snake hits the border or itself
     if (new_x < 0 || new_x >= WIDTH || new_y < 0 || new_y >= HEIGHT) {
-        return 0; // Snake hit the border
+        return 1; // Snake hit the border
     }
     
     // Check if the snake runs into itself
     for (int i = 1; i < snake.length; i++) {
         if (snake.x[i] == new_x && snake.y[i] == new_y) {
-            return 0; // Snake hit itself
+            return 1; // Snake hit itself
         }
     }
 

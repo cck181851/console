@@ -77,6 +77,24 @@ int load_games(char *games[]) {
     return game_count;
 }
 
+// Function to execute the selected game
+void execute_game(const char *game_name) {
+    printf("\033[H\033[J");  // Clear screen before launching the game
+    printf("Starting game: %s\n", game_name);
+
+    char command[MAX_GAME_NAME_LEN + 20];
+
+    sprintf(command, "./bin/%s", game_name);
+    system(command);  // Execute the game
+
+    // Added line to display the score
+    
+
+    printf("\nGame exited. Returning to the main menu...\n");
+    printf("Press any key to continue...\n");
+    get_input();  // Wait for user input before returning to the menu
+}
+
 int main() {
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
@@ -105,10 +123,7 @@ int main() {
             break;  // Exit program
         } else if (input == '\n') {
             // Start the selected game
-            char command[MAX_GAME_NAME_LEN + 20];
-            sprintf(command, "./bin/%s", games[selected_game]);
-            printf("Starting game: %s\n", games[selected_game]);
-            system(command);  // Execute the selected game
+            execute_game(games[selected_game]);
         }
     }
 
@@ -119,3 +134,4 @@ int main() {
 
     return 0;
 }
+

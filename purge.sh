@@ -12,3 +12,4 @@ else
 fi
 
 echo "All files and the disk image have been purged."
+ 

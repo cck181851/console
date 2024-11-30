@@ -5,10 +5,10 @@
 #include <signal.h>
 #include <time.h>
 
-#define ROWS 30
-#define COLS 60
+#define ROWS 22
+#define COLS 50
 #define CANDY_COUNT 10
-#define POISON_COUNT 5
+#define POISON_COUNT 30
 
 // Global Variables
 char maze[ROWS][COLS];
@@ -60,13 +60,13 @@ void generate_random_maze() {
         maze[i][COLS - 1] = '.'; // Last column
     }
 
-    // Ensure player and exit positions
+    // Ensure player position
     maze[player_x][player_y] = 'O'; // Player at the top-left
-    maze[ROWS - 2][COLS - 2] = 'E'; // Exit at the bottom-right
 }
 
-// Function to Place Candies and Poisons
-void place_candies_and_poisons() {
+// Function to Place Candies, Poisons, and Exit
+void place_candies_poisons_and_exit() {
+    // Place candies (C)
     for (int i = 0; i < CANDY_COUNT; i++) {
         int x = rand() % (ROWS - 2) + 1;
         int y = rand() % (COLS - 2) + 1;
@@ -75,6 +75,7 @@ void place_candies_and_poisons() {
         }
     }
 
+    // Place poisons (P)
     for (int i = 0; i < POISON_COUNT; i++) {
         int x = rand() % (ROWS - 2) + 1;
         int y = rand() % (COLS - 2) + 1;
@@ -82,6 +83,14 @@ void place_candies_and_poisons() {
             maze[x][y] = 'P'; // Place poison
         }
     }
+
+    // Place exit (E) randomly, ensuring it is not overwritten
+    int exit_x, exit_y;
+    do {
+        exit_x = rand() % (ROWS - 2) + 1;
+        exit_y = rand() % (COLS - 2) + 1;
+    } while (maze[exit_x][exit_y] != '.'); // Ensure the spot is empty
+    maze[exit_x][exit_y] = 'E'; // Place the exit
 }
 
 // Function to Move Player
@@ -106,11 +115,11 @@ void move_player(char direction) {
         // Check if the player reaches the exit
         if (maze[new_x][new_y] == 'E') {
             print_maze();
-            printf("Congratulations! You escaped the maze!\n");            
+            printf("Congratulations! You escaped the maze!\n");   
+            printf("\nGame Over! Final Score: %d\n", candies_eaten);         
             restore_terminal();
             exit(0);
         }
-            
 
         // Handle candy collection
         if (maze[new_x][new_y] == 'C') {
@@ -133,7 +142,7 @@ void move_player(char direction) {
         player_x = new_x;
         player_y = new_y;
         maze[player_x][player_y] = 'O'; // Set new position
-        }       
+    }       
 }
 
 // Function to Get User Input Without Requiring 'Enter' Key
@@ -173,8 +182,8 @@ int main() {
     // Generate random maze
     generate_random_maze();
 
-    // Place candies and poisons
-    place_candies_and_poisons();
+    // Place candies, poisons, and the exit
+    place_candies_poisons_and_exit();
 
     // Game loop
     while (1) {
@@ -185,7 +194,7 @@ int main() {
             break;
         }
 
-        move_player(input); // Update player position
+        move_player(input); // Update player position        
     }
 
     // Restore terminal settings and exit

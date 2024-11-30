@@ -57,7 +57,7 @@ int load_games(char *games[]) {
     struct dirent *entry;
     int game_count = 0;
 
-    dir = opendir("bin");
+    dir = opendir("mount");
     if (dir == NULL) {
         perror("Failed to open directory");
         return -1;
@@ -84,7 +84,7 @@ void execute_game(const char *game_name) {
 
     char command[MAX_GAME_NAME_LEN + 20];
 
-    sprintf(command, "./bin/%s", game_name);
+    sprintf(command, "./mount/%s", game_name);
     system(command);  // Execute the game
 
     // Added line to display the score

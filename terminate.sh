@@ -7,7 +7,7 @@ if mount | grep "mount" > /dev/null; then
 else
     echo "Disk image is not mounted."
 fi
-
+ 
 # Remove the device file and symbolic link if it exists
 if [ -L vgc_device ]; then
     echo "Removing symbolic link for the device file..."

@@ -5,9 +5,9 @@
 #include <signal.h>
 #include <time.h>
 
-#define ROWS 20
-#define COLS 40
-#define BANDIT_COUNT 10
+#define ROWS 15
+#define COLS 20
+#define BANDIT_COUNT 15
 #define LIFE_PILL_COUNT 3
 #define POISON_COUNT 5
 #define BLOCK_COUNT 15
@@ -38,6 +38,7 @@ void handle_exit(int sig) {
 // Function to print the maze and life
 void print_maze() {
     system("clear"); // Clear the console
+    printf("\033[1;34mSave the Princess Game\033[0m\n\n");
     printf("Life: %d\n", life); // Display remaining life
     for (int i = 0; i < ROWS; i++) {
         for (int j = 0; j < COLS; j++) {
@@ -76,7 +77,7 @@ void generate_random_maze() {
         princess_x = rand() % (ROWS - 2) + 1; // Random x position
         princess_y = rand() % (COLS - 2) + 1; // Random y position
     } while (maze[princess_x][princess_y] != '.'); // Ensure it's not a wall or block
-    maze[princess_x][princess_y] = 'P'; // Place princess
+     maze[princess_x][princess_y] = 'P'; // Place princess
 
     // Place bandits (B)
     for (int i = 0; i < BANDIT_COUNT; i++) {
@@ -225,9 +226,8 @@ int main() {
         if (input == 'q') { // Exit on 'q'
             break;
         }
-
         move_warrior(input); // Update warrior position
-        sleep(30000);
+        sleep(0.33);
     }
 
     // Restore terminal settings and exit
@@ -235,4 +235,3 @@ int main() {
     printf("\nGame exited gracefully.\n");
     return 0;
 }
-

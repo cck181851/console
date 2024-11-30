@@ -49,6 +49,7 @@ void clear_screen() {
 // Function to print the game board
 void print_board() {
     clear_screen();
+    printf("\033[1;34mSnake Game\033[0m\n\n");
     printf("Score: %d\n", score);
 
     for (int i = 0; i < HEIGHT; i++) {
@@ -208,6 +209,7 @@ int main() {
 
     // Game loop
     while (1) {
+        
         print_board();  // Display the board
 
         char input = get_input();  // Get user input without requiring 'Enter'
@@ -237,3 +239,4 @@ int main() {
 
     return 0;
 }
+

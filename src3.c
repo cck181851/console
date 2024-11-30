@@ -14,9 +14,9 @@
 
 // Global variables
 char maze[ROWS][COLS];
-int warrior_x = 1, warrior_y = 1;
+int warrior_x = 0, warrior_y = 0; // Warrior starting position at (0, 0)
 int life = 3; // Warrior's initial life
-int princess_x = ROWS - 2, princess_y = COLS - 2; // Princess position at bottom-right
+int princess_x, princess_y; // Princess position (random)
 int bandits[BANDIT_COUNT][2]; // Bandit positions
 int life_pills[LIFE_PILL_COUNT][2]; // Life pills positions
 int poisons[POISON_COUNT][2]; // Poison positions
@@ -71,13 +71,20 @@ void generate_random_maze() {
     // Place the warrior
     maze[warrior_x][warrior_y] = 'W';
 
-    // Place the princess (P) at the lower-right corner
-    maze[princess_x][princess_y] = 'P';
+    // Randomly place the princess (P) in an open space
+    do {
+        princess_x = rand() % (ROWS - 2) + 1; // Random x position
+        princess_y = rand() % (COLS - 2) + 1; // Random y position
+    } while (maze[princess_x][princess_y] != '.'); // Ensure it's not a wall or block
+    maze[princess_x][princess_y] = 'P'; // Place princess
 
     // Place bandits (B)
     for (int i = 0; i < BANDIT_COUNT; i++) {
-        int x = rand() % (ROWS - 2) + 1;
-        int y = rand() % (COLS - 2) + 1;
+        int x, y;
+        do {
+            x = rand() % (ROWS - 2) + 1;
+            y = rand() % (COLS - 2) + 1;
+        } while (maze[x][y] != '.' || (x == princess_x && y == princess_y)); // Ensure no overlap with princess
         bandits[i][0] = x;
         bandits[i][1] = y;
         maze[x][y] = 'B';
@@ -85,8 +92,11 @@ void generate_random_maze() {
 
     // Place life pills (L)
     for (int i = 0; i < LIFE_PILL_COUNT; i++) {
-        int x = rand() % (ROWS - 2) + 1;
-        int y = rand() % (COLS - 2) + 1;
+        int x, y;
+        do {
+            x = rand() % (ROWS - 2) + 1;
+            y = rand() % (COLS - 2) + 1;
+        } while (maze[x][y] != '.' || (x == princess_x && y == princess_y)); // Ensure no overlap with princess
         life_pills[i][0] = x;
         life_pills[i][1] = y;
         maze[x][y] = 'L';
@@ -94,8 +104,11 @@ void generate_random_maze() {
 
     // Place poisons (X)
     for (int i = 0; i < POISON_COUNT; i++) {
-        int x = rand() % (ROWS - 2) + 1;
-        int y = rand() % (COLS - 2) + 1;
+        int x, y;
+        do {
+            x = rand() % (ROWS - 2) + 1;
+            y = rand() % (COLS - 2) + 1;
+        } while (maze[x][y] != '.' || (x == princess_x && y == princess_y)); // Ensure no overlap with princess
         poisons[i][0] = x;
         poisons[i][1] = y;
         maze[x][y] = 'X';
@@ -103,8 +116,11 @@ void generate_random_maze() {
 
     // Place blocks (B) that do not allow movement
     for (int i = 0; i < BLOCK_COUNT; i++) {
-        int x = rand() % (ROWS - 2) + 1;
-        int y = rand() % (COLS - 2) + 1;
+        int x, y;
+        do {
+            x = rand() % (ROWS - 2) + 1;
+            y = rand() % (COLS - 2) + 1;
+        } while (maze[x][y] != '.' || (x == princess_x && y == princess_y)); // Ensure no overlap with princess
         blocks[i][0] = x;
         blocks[i][1] = y;
         maze[x][y] = '#';
@@ -143,7 +159,7 @@ void move_warrior(char direction) {
         // Check for princess
         if (new_x == princess_x && new_y == princess_y) {
             print_maze();
-            printf("Congratulations! You saved the princess!\n");
+            printf("Congratulations! You saved the princess!\n");            
             restore_terminal();
             exit(0);
         }
@@ -211,6 +227,7 @@ int main() {
         }
 
         move_warrior(input); // Update warrior position
+        sleep(30000);
     }
 
     // Restore terminal settings and exit
@@ -218,3 +235,4 @@ int main() {
     printf("\nGame exited gracefully.\n");
     return 0;
 }
+

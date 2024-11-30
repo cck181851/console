@@ -25,3 +25,4 @@ sudo cp bin/* mount/
 
 # Disk image is mounted and executables copied
 echo "Disk image mounted and executables copied successfully."
+
